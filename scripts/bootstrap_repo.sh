@@ -70,7 +70,6 @@ copy_template() {
 }
 
 copy_template "CONTEXT.md" "CONTEXT.md"
-copy_template "TIMELINE.md" "TIMELINE.md"
 
 if [[ "$with_handoff" -eq 1 ]]; then
   copy_template "HANDOFF.md" "HANDOFF.md"

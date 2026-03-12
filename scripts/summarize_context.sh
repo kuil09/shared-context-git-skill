@@ -33,7 +33,6 @@ done
 cd "$repo_dir"
 
 [[ -f "CONTEXT.md" ]] || { echo "Missing CONTEXT.md" >&2; exit 1; }
-[[ -f "TIMELINE.md" ]] || { echo "Missing TIMELINE.md" >&2; exit 1; }
 
 extract_section() {
   local section_name="$1"
@@ -60,16 +59,12 @@ print_section_summary() {
   echo
 }
 
-timeline_entries="$(grep -Ec '^### ' TIMELINE.md || true)"
 context_lines="$(wc -l < CONTEXT.md | tr -d ' ')"
-timeline_lines="$(wc -l < TIMELINE.md | tr -d ' ')"
 duplicate_bullets="$(grep -E '^- ' CONTEXT.md | sort | uniq -d || true)"
 
 echo "# Shared Context Summary"
 echo
 echo "CONTEXT.md lines: ${context_lines}"
-echo "TIMELINE.md lines: ${timeline_lines}"
-echo "Timeline entries: ${timeline_entries}"
 echo
 
 print_section_summary "Overview"
@@ -83,11 +78,6 @@ echo "## Compaction Hints"
 hint_emitted=0
 if [[ "$context_lines" -gt 120 ]]; then
   echo "- CONTEXT.md is longer than 120 lines; consider compressing repeated narrative."
-  hint_emitted=1
-fi
-
-if [[ "$timeline_entries" -gt 20 ]]; then
-  echo "- TIMELINE.md has more than 20 entries; consider synthesizing recent history into CONTEXT.md."
   hint_emitted=1
 fi
 

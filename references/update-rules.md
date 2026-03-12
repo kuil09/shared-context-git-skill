@@ -8,8 +8,7 @@ Before any edit:
 
 1. Fetch or sync the repo
 2. Read `CONTEXT.md`
-3. Read recent `TIMELINE.md` entries
-4. Read `HANDOFF.md` if it exists
+3. Read `HANDOFF.md` if it exists
 
 Do not update the shared context from memory alone when the remote may have changed.
 
@@ -19,7 +18,7 @@ Do not update the shared context from memory alone when the remote may have chan
 - Put current status, near-term focus, and live observations in `Active Context`.
 - Put accepted choices in `Decisions`.
 - Put uncertainty, missing evidence, and competing hypotheses in `Open Questions`.
-- Put change history in `TIMELINE.md`, not in `CONTEXT.md`.
+- Put change history in commit messages, not in `CONTEXT.md`.
 
 ## Facts vs. Inference
 
@@ -63,5 +62,4 @@ Good compaction:
 Bad compaction:
 
 - Deleting unresolved questions because they are uncomfortable
-- Rewriting history in `TIMELINE.md` to make the record cleaner
 - Removing rationale from a decision that future agents will need

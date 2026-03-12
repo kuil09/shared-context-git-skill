@@ -14,6 +14,28 @@ Use this when you are still exploring or the update is not ready to share.
 6. Review `git diff`
 7. Stop without committing if the notes are still private or provisional
 
+## Commit Message Convention
+
+Every meaningful context commit must use this format:
+
+```
+context: <한줄 요약>
+
+Trigger: <원인>
+Applied: <변경 내용>
+Unresolved: <미해결 사항 또는 None>
+```
+
+Example:
+
+```
+context: API rate limit confirmed at 60 req/min
+
+Trigger: Load test results from staging run
+Applied: Moved rate-limit fact to Stable Facts in CONTEXT.md
+Unresolved: None
+```
+
 ## Commit To Branch And Push
 
 Use this when the update is meaningful and ready for review or shared use.
@@ -23,7 +45,7 @@ Use this when the update is meaningful and ready for review or shared use.
 3. Edit the context files
 4. Run `scripts/validate_context.sh`
 5. Review `git diff`
-6. Commit with a focused message
+6. Commit using the commit message convention above
 7. Push the branch
 
 ## PR Proposal

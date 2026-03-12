@@ -1,6 +1,12 @@
 ---
 name: shared-context-git-skill
 description: Use when multiple AI agents need to share durable project context through a Git-backed remote repository. This skill standardizes how agents bootstrap a shared context repo, sync before reading or writing, record facts and decisions in Markdown, prepare branch-first updates, detect conflicts, and leave a clean handoff using only standard Git CLI and bundled Bash helpers.
+license: MIT
+compatibility: Requires git CLI. Works with any skills-compatible agent.
+allowed-tools: "Bash(git:*) Bash(scripts/*) Read"
+metadata:
+  author: kuil09
+  version: 1.0.0
 ---
 
 # Shared Context Git Skill
@@ -19,7 +25,7 @@ The shared memory lives in a separate Git repository made of Markdown files. Age
 
 ## Core Rules
 
-1. Read before write. Fetch or sync first, then read `CONTEXT.md` and `TIMELINE.md` before editing.
+1. Read before write. Fetch or sync first, then read `CONTEXT.md` before editing.
 2. Keep shared memory in the repo, not only in session-local notes.
 3. Prefer branch-first updates. Direct pushes to the default branch should be rare and explicitly justified.
 4. Never overwrite conflicts automatically. If the repo is dirty or the branch has diverged, stop and reconcile.
@@ -30,7 +36,7 @@ The shared memory lives in a separate Git repository made of Markdown files. Age
 
 1. If the repo does not exist yet, run `scripts/bootstrap_repo.sh`.
 2. In a local clone of the shared context repo, run `scripts/sync_context.sh`.
-3. Read `CONTEXT.md`, `TIMELINE.md`, and `HANDOFF.md` if present.
+3. Read `CONTEXT.md` and `HANDOFF.md` if present.
 4. If you expect to share updates, run `scripts/prepare_branch.sh --actor <name> --slug <topic>`.
 5. Update the Markdown files using the schema in [references/schema.md](references/schema.md).
 6. Run `scripts/validate_context.sh`.
@@ -48,7 +54,6 @@ The shared memory lives in a separate Git repository made of Markdown files. Age
 Required documents:
 
 - `CONTEXT.md`
-- `TIMELINE.md`
 
 Optional documents:
 
@@ -68,10 +73,9 @@ Use the templates in `assets/templates/` and the detailed rules in the reference
 - `scripts/bootstrap_repo.sh`: create the initial document set from templates
 - `scripts/check_divergence.sh`: report divergence of `context/*` branches from the base branch and flag stale branches
 - `scripts/cleanup_branches.sh`: remove merged, older `context/*` branches locally and optionally on `origin`
-- `scripts/compact_timeline.sh`: compact old TIMELINE.md entries by promoting applied changes to CONTEXT.md stable facts
 - `scripts/sync_context.sh`: fetch remote changes and fast-forward the base branch when safe
 - `scripts/prepare_branch.sh`: create or switch to a branch named `context/<actor>/<YYYY-MM-DD>-<slug>`
-- `scripts/validate_context.sh`: check required files, headings, and timeline entry shape
+- `scripts/validate_context.sh`: check required files and headings
 - `scripts/summarize_context.sh`: print a compact status summary and compaction hints
 
 If a task needs host-specific PR creation or repo policy enforcement, keep this skill focused on the Git-native workflow and use separate tooling for the provider-specific step.
