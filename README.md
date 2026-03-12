@@ -1,176 +1,182 @@
 # Shared Context Git Skill
 
-여러 AI 에이전트가 Git 기반 원격 저장소를 통해 프로젝트 컨텍스트를 공유할 수 있도록 표준화된 워크플로를 제공하는 스킬입니다. 에이전트는 Markdown 파일로 구성된 공유 메모리를 읽고, 업데이트하며, Git 히스토리를 리뷰 트레일로 활용합니다.
+[English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [中文](README.zh.md)
 
-## 주요 기능
+A skill that provides a standardized workflow for multiple AI agents to share project context through a Git-backed remote repository. Agents read and update a shared memory made of Markdown files, using Git history as the review trail.
 
-- 표준 문서 템플릿으로 공유 컨텍스트 저장소 초기화
-- 읽기/쓰기 전 로컬 클론 안전 동기화
-- 안정적인 사실, 활성 컨텍스트, 의사결정, 미해결 질문 기록
-- 브랜치 기반 컨텍스트 업데이트로 diff 리뷰 지원
-- 로컬 상태가 오래되었거나 충돌 시 안전 중단
+## Features
 
-## 저장소 구조
+- Bootstrap a shared context repository with standard document templates
+- Safely sync a local clone before reading or writing
+- Record stable facts, active context, decisions, open questions, and handoffs
+- Support branch-first context updates reviewable as diffs
+- Stop safely when the local state is stale, dirty, or diverged
+
+## Repository Structure
 
 ```
-├── SKILL.md                    # 스킬 정의 및 핵심 규칙
+├── SKILL.md                    # Skill definition and core rules
 ├── agents/
-│   ├── openai.yaml             # OpenAI 에이전트 연동 설정
-│   ├── claude.yaml             # Claude Code 에이전트 연동 설정
-│   └── codex.yaml              # OpenAI Codex 에이전트 연동 설정
-├── scripts/                    # 자동화 Bash 스크립트
-│   ├── bootstrap_repo.sh       # 템플릿으로 초기 문서 생성
-│   ├── cleanup_branches.sh     # 오래된 병합 완료 컨텍스트 브랜치 정리
-│   ├── sync_context.sh         # 원격 변경 fetch 및 fast-forward
-│   ├── prepare_branch.sh       # 컨텍스트 브랜치 생성
-│   ├── validate_context.sh     # 문서 구조 검증
-│   └── summarize_context.sh    # 상태 요약 및 압축 힌트 출력
-├── tests/                      # BATS 기반 회귀 테스트
-│   ├── *.bats                  # 스크립트별 동작 검증
-│   ├── test_helper.bash        # 테스트 공통 헬퍼
-│   ├── run_tests.sh            # 전체 테스트 실행기
-│   └── lib/bats-core/          # Git submodule로 관리되는 BATS 실행기
+│   ├── openai.yaml             # OpenAI agent integration config
+│   ├── claude.yaml             # Claude Code agent integration config
+│   └── codex.yaml              # OpenAI Codex agent integration config
+├── scripts/                    # Automation Bash scripts
+│   ├── bootstrap_repo.sh       # Create initial documents from templates
+│   ├── check_divergence.sh     # Report context branch divergence and stale branches
+│   ├── cleanup_branches.sh     # Remove old merged context/* branches
+│   ├── compact_timeline.sh     # Promote old timeline entries to CONTEXT.md stable facts
+│   ├── sync_context.sh         # Fetch remote changes and fast-forward
+│   ├── prepare_branch.sh       # Create a context branch
+│   ├── validate_context.sh     # Validate document structure
+│   └── summarize_context.sh    # Print status summary and compaction hints
+├── tests/                      # BATS regression tests
+│   ├── *.bats                  # Per-script behavior tests
+│   ├── test_helper.bash        # Shared test helpers
+│   ├── run_tests.sh            # Full test runner
+│   └── lib/bats-core/          # BATS runner managed as a Git submodule
 ├── assets/
-│   └── templates/              # 문서 시작 템플릿
-│       ├── CONTEXT.md           # 공유 상태 문서
-│       ├── TIMELINE.md          # 변경 이력 (추가 전용)
-│       ├── HANDOFF.md           # 인수인계 노트 (선택)
-│       └── POLICY.md            # 협업 정책 (선택)
-└── references/                 # 상세 참조 문서
-    ├── schema.md               # 문서 구조 명세
-    ├── update-rules.md         # 업데이트 규칙
-    ├── git-workflows.md        # Git 워크플로 패턴
-    ├── conflict-policy.md      # 충돌 처리 정책
-    └── handoff-guidelines.md   # 인수인계 가이드라인
+│   └── templates/              # Starter document templates
+│       ├── CONTEXT.md           # Shared state document
+│       ├── TIMELINE.md          # Append-only change history
+│       ├── HANDOFF.md           # Handoff notes (optional)
+│       └── POLICY.md            # Collaboration policy (optional)
+└── references/                 # Detailed reference documents
+    ├── schema.md               # Document structure specification
+    ├── update-rules.md         # Update rules
+    ├── git-workflows.md        # Git workflow patterns
+    ├── conflict-policy.md      # Conflict handling policy
+    └── handoff-guidelines.md   # Handoff guidelines
 ```
 
-## 문서 구성
+## Documents
 
-### 필수 문서
+### Required
 
-| 문서 | 설명 |
-|------|------|
-| `CONTEXT.md` | 현재 프로젝트 상태를 요약하는 핵심 문서. 개요, 안정적 사실, 활성 컨텍스트, 의사결정, 미해결 질문 섹션으로 구성 |
-| `TIMELINE.md` | 의미 있는 컨텍스트 변경의 추가 전용(append-only) 이력 |
+| Document | Description |
+|----------|-------------|
+| `CONTEXT.md` | Core document summarizing current project state. Contains overview, stable facts, active context, decisions, and open questions sections. |
+| `TIMELINE.md` | Append-only history of meaningful context changes. |
 
-### 선택 문서
+### Optional
 
-| 문서 | 설명 |
-|------|------|
-| `HANDOFF.md` | 다음 에이전트를 위한 인수인계 노트 |
-| `POLICY.md` | 팀 협업 정책 및 가이드라인 |
+| Document | Description |
+|----------|-------------|
+| `HANDOFF.md` | Handoff notes for the next agent. |
+| `POLICY.md` | Team collaboration policies and guidelines. |
 
-## 핵심 규칙
+## Core Rules
 
-1. **읽기 우선**: fetch 또는 sync 후 `CONTEXT.md`와 `TIMELINE.md`를 먼저 읽은 뒤 편집합니다.
-2. **공유 메모리 활용**: 세션 로컬 노트가 아닌 저장소에 공유 메모리를 보관합니다.
-3. **브랜치 기반 업데이트**: 기본 브랜치에 직접 push하지 않고 브랜치를 통해 업데이트합니다.
-4. **충돌 자동 해결 금지**: 저장소가 dirty하거나 브랜치가 분기된 경우 중단하고 조정합니다.
-5. **사실과 추론 분리**: 검증된 사실은 안정 섹션에, 불확실한 내용은 미해결 질문에 기록합니다.
-6. **의미 있는 타임라인 항목**: 사소한 변경이 아닌 의미 있는 변경만 타임라인에 기록합니다.
+1. **Read before write.** Fetch or sync first, then read `CONTEXT.md` and `TIMELINE.md` before editing.
+2. **Keep shared memory in the repo**, not only in session-local notes.
+3. **Prefer branch-first updates.** Direct pushes to the default branch should be rare and explicitly justified.
+4. **Never overwrite conflicts automatically.** If the repo is dirty or the branch has diverged, stop and reconcile.
+5. **Separate facts from inferences.** Verified facts belong in the stable sections; uncertainty stays visible in open questions or clearly labeled hypotheses.
+6. **Add timeline entries only for meaningful changes.** Avoid noisy logging for every minor thought.
 
-## 사용 방법
+## Usage
 
-### 워크플로
+### Workflow
 
 ```bash
-# 1. 저장소가 없으면 초기화
+# 1. Bootstrap if the repo does not exist yet
 scripts/bootstrap_repo.sh
 
-# 2. 로컬 클론에서 동기화
+# 2. Sync in a local clone
 scripts/sync_context.sh
 
-# 3. CONTEXT.md, TIMELINE.md, HANDOFF.md(있으면) 읽기
+# 3. Read CONTEXT.md, TIMELINE.md, and HANDOFF.md if present
 
-# 4. 업데이트 공유가 필요하면 브랜치 생성
+# 4. Create a branch if you expect to share updates
 scripts/prepare_branch.sh --actor <name> --slug <topic>
 
-# 5. Markdown 파일 업데이트
+# 5. Update the Markdown files
 
-# 6. 문서 구조 검증
+# 6. Validate document structure
 scripts/validate_context.sh
 
-# 7. diff 확인 및 상태 요약
+# 7. Review the diff and summarize current state
 scripts/summarize_context.sh
 
-# 8. 변경이 의미 있고 정확하면 커밋 & 푸시
+# 8. Commit and push only when the change is meaningful and accurate
 ```
 
-### 스크립트 가이드
+### Script Guide
 
-| 스크립트 | 설명 |
-|---------|------|
-| `bootstrap_repo.sh` | 템플릿에서 초기 문서 세트를 생성합니다 |
-| `cleanup_branches.sh` | 병합된 오래된 `context/*` 브랜치를 로컬 또는 원격에서 정리합니다 |
-| `sync_context.sh` | 원격 변경을 fetch하고 기본 브랜치를 안전하게 fast-forward합니다 |
-| `prepare_branch.sh` | `context/<actor>/<YYYY-MM-DD>-<slug>` 형식의 브랜치를 생성하거나 전환합니다 |
-| `validate_context.sh` | 필수 파일, 제목, 타임라인 항목 형식을 검사합니다 |
-| `summarize_context.sh` | 간결한 상태 요약과 압축 힌트를 출력합니다 |
+| Script | Description |
+|--------|-------------|
+| `bootstrap_repo.sh` | Create the initial document set from templates. |
+| `check_divergence.sh` | Report divergence of `context/*` branches from the base branch and flag stale branches. |
+| `cleanup_branches.sh` | Remove merged, older `context/*` branches locally and optionally on `origin`. |
+| `compact_timeline.sh` | Compact old TIMELINE.md entries by promoting applied changes to CONTEXT.md stable facts. |
+| `sync_context.sh` | Fetch remote changes and fast-forward the base branch when safe. |
+| `prepare_branch.sh` | Create or switch to a branch named `context/<actor>/<YYYY-MM-DD>-<slug>`. |
+| `validate_context.sh` | Check required files, headings, and timeline entry shape. |
+| `summarize_context.sh` | Print a compact status summary and compaction hints. |
 
-## 테스트
+## Tests
 
 ```bash
 git submodule update --init --recursive
 ./tests/run_tests.sh
 ```
 
-- 테스트는 BATS를 사용해 `scripts/` 아래 워크플로 스크립트의 정상/오류 경로를 검증합니다.
-- `tests/run_tests.sh`는 포함된 `tests/lib/bats-core` submodule을 사용해 전체 `.bats` 스위트를 실행합니다.
+- Tests use BATS to validate normal and error paths for workflow scripts under `scripts/`.
+- `tests/run_tests.sh` runs the full `.bats` suite using the bundled `tests/lib/bats-core` submodule.
 
-## 협업 모드
+## Collaboration Modes
 
-- **로컬 초안**: 동기화, 읽기, 로컬 편집, 검증 후 커밋 없이 중단
-- **브랜치 커밋 & 푸시**: 컨텍스트 브랜치 생성, 문서 업데이트, 검증, 커밋, 푸시
-- **PR 제안**: Git 작업 수행 후 PR 생성은 별도 도구에 위임
+- **Local draft only:** sync, read, edit locally, validate, and stop without committing.
+- **Commit to branch and push:** create a context branch, update docs, validate, commit, and push.
+- **PR proposal:** do the Git work here, then hand off PR creation to provider-specific tooling outside this skill.
 
-## 참조 문서
+## Reference Documents
 
-- [schema.md](references/schema.md) — 문서 구조 명세
-- [update-rules.md](references/update-rules.md) — 업데이트 규칙
-- [git-workflows.md](references/git-workflows.md) — Git 워크플로 패턴
-- [conflict-policy.md](references/conflict-policy.md) — 충돌 처리 정책
-- [handoff-guidelines.md](references/handoff-guidelines.md) — 인수인계 가이드라인
+- [schema.md](references/schema.md) — Document structure specification
+- [update-rules.md](references/update-rules.md) — Update rules
+- [git-workflows.md](references/git-workflows.md) — Git workflow patterns
+- [conflict-policy.md](references/conflict-policy.md) — Conflict handling policy
+- [handoff-guidelines.md](references/handoff-guidelines.md) — Handoff guidelines
 
-## 에이전트별 설정
+## Agent Configuration
 
-각 에이전트 프레임워크에 맞는 설정 파일이 `agents/` 디렉터리에 포함되어 있습니다.
+Configuration files for each agent framework are included in the `agents/` directory.
 
-| 설정 파일 | 에이전트 | 기본 액터명 | 브랜치 접두사 |
-|-----------|---------|------------|--------------|
+| Config file | Agent | Default actor name | Branch prefix |
+|-------------|-------|--------------------|---------------|
 | `agents/openai.yaml` | OpenAI Agents | `openai` | `context/openai` |
 | `agents/claude.yaml` | Claude Code | `claude` | `context/claude` |
 | `agents/codex.yaml` | OpenAI Codex | `codex` | `context/codex` |
 
-각 설정에는 스킬 참조 경로(`skill_paths`), 기본 파라미터(`parameters`), 워크플로 힌트(`workflow_hints`)가 포함되어 있습니다.
+Each config includes skill reference paths (`skill_paths`), default parameters (`parameters`), and workflow hints (`workflow_hints`).
 
-### OpenAI Agents 사용법
+### OpenAI Agents
 
 ```bash
-# 스킬 설정 파일 경로: agents/openai.yaml
-# 기본 브랜치 생성 예시:
+# Config file path: agents/openai.yaml
+# Example branch creation:
 scripts/prepare_branch.sh --actor openai --slug my-topic
 ```
 
-### Claude Code 사용법
+### Claude Code
 
 ```bash
-# 스킬 설정 파일 경로: agents/claude.yaml
-# 기본 브랜치 생성 예시:
+# Config file path: agents/claude.yaml
+# Example branch creation:
 scripts/prepare_branch.sh --actor claude --slug my-topic
 ```
 
-### Codex 사용법
+### Codex
 
 ```bash
-# 스킬 설정 파일 경로: agents/codex.yaml
-# 기본 브랜치 생성 예시:
+# Config file path: agents/codex.yaml
+# Example branch creation:
 scripts/prepare_branch.sh --actor codex --slug my-topic
 ```
 
-## 요구 사항
+## Requirements
 
 - Git CLI
-- Bash 셸
-- 표준 Unix 유틸리티 (grep, awk 등)
+- Bash shell
+- Standard Unix utilities (grep, awk, etc.)
 
-외부 패키지나 라이브러리 의존성은 없습니다.
+No external package or library dependencies.
