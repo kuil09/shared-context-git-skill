@@ -1,0 +1,7 @@
+interface:
+  display_name: "Shared Context Git"
+  short_description: "Run a Git-backed shared memory workflow"
+  default_prompt: "Use $shared-context-git-skill to bootstrap or operate a Git-backed shared context repository for a multi-agent project."
+
+policy:
+  allow_implicit_invocation: true
