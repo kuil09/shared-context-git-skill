@@ -4,6 +4,35 @@
 
 A skill that provides a standardized workflow for multiple AI agents to share project context through a Git-backed remote repository. Agents read and update a shared memory made of Markdown files, using Git history as the review trail.
 
+## Installation
+
+```bash
+npx skills add kuil09/shared-context-git-skill
+```
+
+After installation, the skill files are available locally. See [Quick Start](#quick-start) below to begin.
+
+## Quick Start
+
+```bash
+# 1. Bootstrap a new shared context repo (first time only)
+scripts/bootstrap_repo.sh
+
+# 2. Sync before reading or writing
+scripts/sync_context.sh
+
+# 3. Create a context branch for your update
+scripts/prepare_branch.sh --actor <your-name> --slug <short-topic>
+
+# 4. Edit CONTEXT.md and/or TIMELINE.md
+
+# 5. Validate, review, and commit
+scripts/validate_context.sh
+scripts/summarize_context.sh
+git add -p && git commit -m "context: <summary>"
+git push
+```
+
 ## Features
 
 - Bootstrap a shared context repository with standard document templates
