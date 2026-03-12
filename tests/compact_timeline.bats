@@ -269,6 +269,118 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "compact_timeline appends facts after existing Stable Facts content" {
+  bootstrap_context
+  local old_date
+  old_date="$(date -v-60d +%Y-%m-%d 2>/dev/null || date -d '60 days ago' +%Y-%m-%d)"
+
+  # Add an existing fact to Stable Facts section
+  python3 - <<PY "$TEST_TMPDIR/CONTEXT.md"
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+text = path.read_text()
+path.write_text(text.replace("## Stable Facts\n\n", "## Stable Facts\n\n- Pre-existing fact\n", 1))
+PY
+
+  cat > "$TEST_TMPDIR/TIMELINE.md" <<EOF
+# Timeline
+
+Use this file as an append-only record of meaningful context changes.
+
+## Entry Template
+
+\`\`\`markdown
+### 2026-03-12T09:15:00Z | agent-name
+- Timestamp: 2026-03-12T09:15:00Z
+- Actor: agent-name
+- Trigger: What prompted this update
+- Applied Changes:
+  - Summarize the facts, decisions, or context that changed
+- Unresolved Items:
+  - List remaining uncertainty, or write \`- None\`
+\`\`\`
+
+## Entries
+
+### ${old_date}T10:00:00Z | old-bot
+- Timestamp: ${old_date}T10:00:00Z
+- Actor: old-bot
+- Trigger: Old work
+- Applied Changes:
+  - New fact from compaction
+- Unresolved Items:
+  - None
+EOF
+
+  run "$SCRIPTS_DIR/compact_timeline.sh" --repo "$TEST_TMPDIR" --days 30 --yes
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"1 fact(s) added to Stable Facts"* ]]
+
+  # Both the pre-existing and new fact should appear in CONTEXT.md
+  run grep "Pre-existing fact" "$TEST_TMPDIR/CONTEXT.md"
+  [ "$status" -eq 0 ]
+  run grep "New fact from compaction" "$TEST_TMPDIR/CONTEXT.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "compact_timeline dry-run with multiple old entries counts correctly" {
+  bootstrap_context
+  local old_date
+  old_date="$(date -v-60d +%Y-%m-%d 2>/dev/null || date -d '60 days ago' +%Y-%m-%d)"
+
+  cat > "$TEST_TMPDIR/TIMELINE.md" <<EOF
+# Timeline
+
+Use this file as an append-only record of meaningful context changes.
+
+## Entry Template
+
+\`\`\`markdown
+### 2026-03-12T09:15:00Z | agent-name
+- Timestamp: 2026-03-12T09:15:00Z
+- Actor: agent-name
+- Trigger: What prompted this update
+- Applied Changes:
+  - Summarize the facts, decisions, or context that changed
+- Unresolved Items:
+  - List remaining uncertainty, or write \`- None\`
+\`\`\`
+
+## Entries
+
+### ${old_date}T08:00:00Z | bot-a
+- Timestamp: ${old_date}T08:00:00Z
+- Actor: bot-a
+- Trigger: First old entry
+- Applied Changes:
+  - Fact alpha
+- Unresolved Items:
+  - None
+
+### ${old_date}T09:00:00Z | bot-b
+- Timestamp: ${old_date}T09:00:00Z
+- Actor: bot-b
+- Trigger: Second old entry
+- Applied Changes:
+  - Fact beta
+- Unresolved Items:
+  - None
+EOF
+
+  run "$SCRIPTS_DIR/compact_timeline.sh" --repo "$TEST_TMPDIR" --days 30 --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"2 entry/entries older than 30 days"* ]]
+  [[ "$output" == *"Fact alpha"* ]]
+  [[ "$output" == *"Fact beta"* ]]
+  [[ "$output" == *"dry-run"* ]]
+  # Files should not be modified
+  run grep "bot-a" "$TEST_TMPDIR/TIMELINE.md"
+  [ "$status" -eq 0 ]
+}
+
 @test "compact_timeline treats entry with unparseable timestamp as recent" {
   bootstrap_context
   cat > "$TEST_TMPDIR/TIMELINE.md" <<'EOF'

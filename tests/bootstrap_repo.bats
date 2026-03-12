@@ -84,3 +84,15 @@ teardown() { teardown_tmpdir; }
   [ "$status" -ne 0 ]
   [[ "$output" == *"Missing value"* ]]
 }
+
+@test "bootstrap refuses to overwrite existing CONTEXT.md even when TIMELINE.md is absent" {
+  # Only place CONTEXT.md in the target — TIMELINE.md is not there yet
+  cp "$TEMPLATES_DIR/CONTEXT.md" "$TEST_TMPDIR/CONTEXT.md"
+
+  run "$SCRIPTS_DIR/bootstrap_repo.sh" --target "$TEST_TMPDIR"
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Refusing to overwrite"* ]]
+  # TIMELINE.md should NOT have been created
+  [ ! -f "$TEST_TMPDIR/TIMELINE.md" ]
+}

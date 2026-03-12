@@ -127,6 +127,30 @@ EOF
   [ "$status" -ne 0 ]
 }
 
+@test "summarize_context handles CONTEXT.md with no bullets in any section" {
+  bootstrap_context
+  cat > "$TEST_TMPDIR/CONTEXT.md" <<'EOF'
+# Shared Context
+
+## Overview
+
+## Stable Facts
+
+## Active Context
+
+## Decisions
+
+## Open Questions
+EOF
+
+  run "$SCRIPTS_DIR/summarize_context.sh" --repo "$TEST_TMPDIR"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"# Shared Context Summary"* ]]
+  # Should not report duplicate bullets (there are none)
+  [[ "$output" != *"Duplicate bullets"* ]]
+}
+
 @test "summarize_context emits all three hints when all conditions are met" {
   bootstrap_context
   {

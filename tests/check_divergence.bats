@@ -202,6 +202,19 @@ create_stale_context_branch() {
   [[ "$output" == *"WARNING"* ]]
 }
 
+@test "check_divergence reports all branches when mix of ok and warned" {
+  create_context_branch "context/bot/2026-03-12-ok-branch" 3
+  create_context_branch "context/bot/2026-03-12-over-threshold" 15
+
+  run "$SCRIPTS_DIR/check_divergence.sh" --repo "$TEST_TMPDIR" --threshold 10
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"context/bot/2026-03-12-ok-branch"* ]]
+  [[ "$output" == *"(ok)"* ]]
+  [[ "$output" == *"context/bot/2026-03-12-over-threshold"* ]]
+  [[ "$output" == *"WARNING"* ]]
+}
+
 @test "check_divergence reports branch that is both stale and diverged" {
   local old_date
   old_date="$(date -v-60d +%Y-%m-%dT12:00:00 2>/dev/null || date -d "60 days ago" +%Y-%m-%dT12:00:00)"

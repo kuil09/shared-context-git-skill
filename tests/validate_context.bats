@@ -349,6 +349,64 @@ PY
   [[ "$output" == *"missing '## Entry Template'"* ]]
 }
 
+@test "validate_context passes when CONTEXT.md has duplicate required heading" {
+  bootstrap_context
+  # Add a second ## Decisions heading — grep -Eq still finds the pattern, so should pass
+  printf '\n## Decisions\n\n- Duplicate section\n' >> "$TEST_TMPDIR/CONTEXT.md"
+
+  run "$SCRIPTS_DIR/validate_context.sh" --repo "$TEST_TMPDIR"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Shared context structure is valid"* ]]
+}
+
+@test "validate_context --strict fails on invalid entry even when a valid entry precedes it" {
+  bootstrap_context
+  cat > "$TEST_TMPDIR/TIMELINE.md" <<'EOF'
+# Timeline
+
+Use this file as an append-only record of meaningful context changes.
+
+## Entry Template
+
+```markdown
+### 2026-03-12T09:15:00Z | agent-name
+- Timestamp: 2026-03-12T09:15:00Z
+- Actor: agent-name
+- Trigger: What prompted this update
+- Applied Changes:
+  - Summarize the facts, decisions, or context that changed
+- Unresolved Items:
+  - List remaining uncertainty, or write `- None`
+```
+
+## Entries
+
+### 2026-03-12T10:00:00Z | valid-bot
+- Timestamp: 2026-03-12T10:00:00Z
+- Actor: valid-bot
+- Trigger: Valid entry
+- Applied Changes:
+  - Something valid
+- Unresolved Items:
+  - None
+
+### bad-timestamp | invalid-bot
+- Timestamp: not-a-date
+- Actor: invalid-bot
+- Trigger: Invalid entry
+- Applied Changes:
+  - Something invalid
+- Unresolved Items:
+  - None
+EOF
+
+  run "$SCRIPTS_DIR/validate_context.sh" --repo "$TEST_TMPDIR" --strict
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"invalid ISO 8601 timestamp"* ]]
+}
+
 @test "validate_context without --strict passes invalid timestamp (backward compat)" {
   bootstrap_context
   cat > "$TEST_TMPDIR/TIMELINE.md" <<'EOF'

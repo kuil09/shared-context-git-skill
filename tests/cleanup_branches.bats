@@ -183,6 +183,23 @@ merge_context_branch_into_main() {
   [ "$status" -eq 0 ]
 }
 
+@test "cleanup_branches dry-run with --remote reports would-delete without modifying" {
+  create_context_branch_commit "context/alice/2020-01-15-remote-dryrun" "remote-dryrun.txt" "remote dry run" "$OLD_DATE"
+  git -C "$TRACKING_REPO_DIR" push -u origin "context/alice/2020-01-15-remote-dryrun" >/dev/null 2>&1
+  merge_context_branch_into_main "context/alice/2020-01-15-remote-dryrun"
+  git -C "$TRACKING_REPO_DIR" push origin main >/dev/null 2>&1
+  git -C "$TRACKING_REPO_DIR" fetch origin >/dev/null 2>&1
+
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --repo "$TRACKING_REPO_DIR" --dry-run --remote
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"dry-run"* ]]
+  # Branch should still exist on remote
+  run git -C "$TRACKING_REPO_DIR" ls-remote --heads origin "context/alice/2020-01-15-remote-dryrun"
+  [ "$status" -eq 0 ]
+  [ -n "$output" ]
+}
+
 @test "cleanup_branches deletes multiple merged context branches in one run" {
   create_context_branch_commit "context/alice/2020-01-15-multi-1" "multi1.txt" "multi 1" "$OLD_DATE"
   merge_context_branch_into_main "context/alice/2020-01-15-multi-1"
