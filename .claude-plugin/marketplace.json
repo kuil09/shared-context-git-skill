@@ -1,0 +1,8 @@
+{
+  "metadata": { "pluginRoot": "." },
+  "plugins": [{
+    "name": "shared-context-git-skill",
+    "source": "shared-context-git-skill",
+    "skills": ["./"]
+  }]
+}
