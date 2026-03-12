@@ -112,7 +112,7 @@ if $delete_remote; then
     [[ -n "$ref" ]] || continue
     ref="${ref#"${ref%%[![:space:]]*}"}"
     # ref looks like "origin/context/actor/date-slug"
-    branch="${ref#${remote}/}"
+    branch="${ref#"${remote}"/}"
 
     # Never delete remote tracking for current or base branch
     [[ "$branch" != "$current_branch" ]] || continue

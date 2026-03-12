@@ -214,7 +214,6 @@ fi
 # Step 2: Remove old entries from TIMELINE.md
 tmpfile="$(mktemp)"
 entries_section_started=0
-in_old_entry=0
 skip_until_next=0
 current_heading=""
 
