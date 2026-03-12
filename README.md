@@ -15,13 +15,21 @@
 ```
 ├── SKILL.md                    # 스킬 정의 및 핵심 규칙
 ├── agents/
-│   └── openai.yaml             # OpenAI 에이전트 연동 설정
+│   ├── openai.yaml             # OpenAI 에이전트 연동 설정
+│   ├── claude.yaml             # Claude Code 에이전트 연동 설정
+│   └── codex.yaml              # OpenAI Codex 에이전트 연동 설정
 ├── scripts/                    # 자동화 Bash 스크립트
 │   ├── bootstrap_repo.sh       # 템플릿으로 초기 문서 생성
+│   ├── cleanup_branches.sh     # 오래된 병합 완료 컨텍스트 브랜치 정리
 │   ├── sync_context.sh         # 원격 변경 fetch 및 fast-forward
 │   ├── prepare_branch.sh       # 컨텍스트 브랜치 생성
 │   ├── validate_context.sh     # 문서 구조 검증
 │   └── summarize_context.sh    # 상태 요약 및 압축 힌트 출력
+├── tests/                      # BATS 기반 회귀 테스트
+│   ├── *.bats                  # 스크립트별 동작 검증
+│   ├── test_helper.bash        # 테스트 공통 헬퍼
+│   ├── run_tests.sh            # 전체 테스트 실행기
+│   └── lib/bats-core/          # Git submodule로 관리되는 BATS 실행기
 ├── assets/
 │   └── templates/              # 문서 시작 템플릿
 │       ├── CONTEXT.md           # 공유 상태 문서
@@ -93,10 +101,21 @@ scripts/summarize_context.sh
 | 스크립트 | 설명 |
 |---------|------|
 | `bootstrap_repo.sh` | 템플릿에서 초기 문서 세트를 생성합니다 |
+| `cleanup_branches.sh` | 병합된 오래된 `context/*` 브랜치를 로컬 또는 원격에서 정리합니다 |
 | `sync_context.sh` | 원격 변경을 fetch하고 기본 브랜치를 안전하게 fast-forward합니다 |
 | `prepare_branch.sh` | `context/<actor>/<YYYY-MM-DD>-<slug>` 형식의 브랜치를 생성하거나 전환합니다 |
 | `validate_context.sh` | 필수 파일, 제목, 타임라인 항목 형식을 검사합니다 |
 | `summarize_context.sh` | 간결한 상태 요약과 압축 힌트를 출력합니다 |
+
+## 테스트
+
+```bash
+git submodule update --init --recursive
+./tests/run_tests.sh
+```
+
+- 테스트는 BATS를 사용해 `scripts/` 아래 워크플로 스크립트의 정상/오류 경로를 검증합니다.
+- `tests/run_tests.sh`는 포함된 `tests/lib/bats-core` submodule을 사용해 전체 `.bats` 스위트를 실행합니다.
 
 ## 협업 모드
 
@@ -111,6 +130,42 @@ scripts/summarize_context.sh
 - [git-workflows.md](references/git-workflows.md) — Git 워크플로 패턴
 - [conflict-policy.md](references/conflict-policy.md) — 충돌 처리 정책
 - [handoff-guidelines.md](references/handoff-guidelines.md) — 인수인계 가이드라인
+
+## 에이전트별 설정
+
+각 에이전트 프레임워크에 맞는 설정 파일이 `agents/` 디렉터리에 포함되어 있습니다.
+
+| 설정 파일 | 에이전트 | 기본 액터명 | 브랜치 접두사 |
+|-----------|---------|------------|--------------|
+| `agents/openai.yaml` | OpenAI Agents | `openai` | `context/openai` |
+| `agents/claude.yaml` | Claude Code | `claude` | `context/claude` |
+| `agents/codex.yaml` | OpenAI Codex | `codex` | `context/codex` |
+
+각 설정에는 스킬 참조 경로(`skill_paths`), 기본 파라미터(`parameters`), 워크플로 힌트(`workflow_hints`)가 포함되어 있습니다.
+
+### OpenAI Agents 사용법
+
+```bash
+# 스킬 설정 파일 경로: agents/openai.yaml
+# 기본 브랜치 생성 예시:
+scripts/prepare_branch.sh --actor openai --slug my-topic
+```
+
+### Claude Code 사용법
+
+```bash
+# 스킬 설정 파일 경로: agents/claude.yaml
+# 기본 브랜치 생성 예시:
+scripts/prepare_branch.sh --actor claude --slug my-topic
+```
+
+### Codex 사용법
+
+```bash
+# 스킬 설정 파일 경로: agents/codex.yaml
+# 기본 브랜치 생성 예시:
+scripts/prepare_branch.sh --actor codex --slug my-topic
+```
 
 ## 요구 사항
 

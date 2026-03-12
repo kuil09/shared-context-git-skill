@@ -66,6 +66,7 @@ Use the templates in `assets/templates/` and the detailed rules in the reference
 ## Script Guide
 
 - `scripts/bootstrap_repo.sh`: create the initial document set from templates
+- `scripts/cleanup_branches.sh`: remove merged, older `context/*` branches locally and optionally on `origin`
 - `scripts/sync_context.sh`: fetch remote changes and fast-forward the base branch when safe
 - `scripts/prepare_branch.sh`: create or switch to a branch named `context/<actor>/<YYYY-MM-DD>-<slug>`
 - `scripts/validate_context.sh`: check required files, headings, and timeline entry shape
