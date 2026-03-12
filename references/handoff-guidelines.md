@@ -29,7 +29,7 @@ Cover these four points:
 
 ## What Changed
 - Added verified API rate-limit notes to `CONTEXT.md`
-- Logged the update in `TIMELINE.md`
+- Committed the update with a structured context message
 
 ## What Is True Now
 - The shared repo has the latest staging findings

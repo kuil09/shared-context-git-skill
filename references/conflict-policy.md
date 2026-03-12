@@ -46,4 +46,4 @@ If Git reports conflicts:
 - Stop editing automation
 - Open the conflicting files and reconcile them manually
 - Preserve both the latest verified facts and the latest unresolved questions
-- Add a timeline entry if the reconcile materially changes the shared understanding
+- Use a structured commit message if the reconcile materially changes the shared understanding

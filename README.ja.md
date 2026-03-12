@@ -24,7 +24,6 @@
 │   ├── bootstrap_repo.sh       # テンプレートから初期ドキュメントを生成
 │   ├── check_divergence.sh     # コンテキストブランチの乖離と古いブランチを報告
 │   ├── cleanup_branches.sh     # 古いマージ済みcontext/*ブランチを削除
-│   ├── compact_timeline.sh     # 古いタイムラインエントリをCONTEXT.mdの安定した事実に昇格
 │   ├── sync_context.sh         # リモート変更をfetchしてfast-forward
 │   ├── prepare_branch.sh       # コンテキストブランチを作成
 │   ├── validate_context.sh     # ドキュメント構造を検証
@@ -37,7 +36,6 @@
 ├── assets/
 │   └── templates/              # ドキュメントスタータテンプレート
 │       ├── CONTEXT.md           # 共有状態ドキュメント
-│       ├── TIMELINE.md          # 追記専用の変更履歴
 │       ├── HANDOFF.md           # 引き継ぎノート（任意）
 │       └── POLICY.md            # 協働ポリシー（任意）
 └── references/                 # 詳細リファレンスドキュメント
@@ -55,7 +53,6 @@
 | ドキュメント | 説明 |
 |-------------|------|
 | `CONTEXT.md` | 現在のプロジェクト状態を要約するコアドキュメント。概要、安定した事実、アクティブコンテキスト、意思決定、未解決の質問セクションで構成。 |
-| `TIMELINE.md` | 意味のあるコンテキスト変更の追記専用履歴。 |
 
 ### 任意ドキュメント
 
@@ -66,12 +63,12 @@
 
 ## コアルール
 
-1. **読み優先**: fetchまたはsync後、`CONTEXT.md`と`TIMELINE.md`を読んでから編集します。
+1. **読み優先**: fetchまたはsync後、`CONTEXT.md`を読んでから編集します。
 2. **共有メモリはリポジトリに保存**: セッションローカルのノートではなく、リポジトリに共有メモリを保管します。
 3. **ブランチベースの更新を優先**: デフォルトブランチへの直接pushは避け、ブランチを通じて更新します。
 4. **競合の自動解決禁止**: リポジトリがdirtyまたはブランチが乖離している場合は、停止して調整します。
 5. **事実と推論を分離**: 検証済みの事実は安定セクションに、不確実な内容は未解決の質問に記録します。
-6. **意味のあるタイムラインエントリのみ**: 些細な変更ではなく、意味のある変更のみタイムラインに記録します。
+6. **変更履歴はコミットメッセージに記録**: 別ファイルではなく、構造化されたコミットメッセージ（Trigger/Applied/Unresolved）を使用します。
 
 ## 使い方
 
@@ -84,7 +81,7 @@ scripts/bootstrap_repo.sh
 # 2. ローカルクローンで同期
 scripts/sync_context.sh
 
-# 3. CONTEXT.md、TIMELINE.md、HANDOFF.md（存在する場合）を読む
+# 3. CONTEXT.md、HANDOFF.md（存在する場合）を読む
 
 # 4. 更新を共有する場合はブランチを作成
 scripts/prepare_branch.sh --actor <name> --slug <topic>
@@ -107,10 +104,9 @@ scripts/summarize_context.sh
 | `bootstrap_repo.sh` | テンプレートから初期ドキュメントセットを作成します。 |
 | `check_divergence.sh` | `context/*`ブランチのベースブランチからの乖離と古いブランチを報告します。 |
 | `cleanup_branches.sh` | マージ済みの古い`context/*`ブランチをローカルおよびオプションで`origin`から削除します。 |
-| `compact_timeline.sh` | 古いTIMELINE.mdエントリを圧縮し、適用済み変更をCONTEXT.mdの安定した事実に昇格します。 |
 | `sync_context.sh` | リモート変更をfetchし、安全な場合にベースブランチをfast-forwardします。 |
 | `prepare_branch.sh` | `context/<actor>/<YYYY-MM-DD>-<slug>`という名前のブランチを作成または切り替えます。 |
-| `validate_context.sh` | 必須ファイル、見出し、タイムラインエントリの形式を確認します。 |
+| `validate_context.sh` | 必須ファイルと見出しを確認します。 |
 | `summarize_context.sh` | コンパクトなステータスサマリーと圧縮ヒントを出力します。 |
 
 ## テスト

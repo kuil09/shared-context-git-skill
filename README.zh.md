@@ -24,7 +24,6 @@
 │   ├── bootstrap_repo.sh       # 从模板创建初始文档
 │   ├── check_divergence.sh     # 报告上下文分支的分叉和过期分支
 │   ├── cleanup_branches.sh     # 删除旧的已合并context/*分支
-│   ├── compact_timeline.sh     # 将旧时间线条目提升为CONTEXT.md中的稳定事实
 │   ├── sync_context.sh         # 获取远程变更并快进
 │   ├── prepare_branch.sh       # 创建上下文分支
 │   ├── validate_context.sh     # 验证文档结构
@@ -37,7 +36,6 @@
 ├── assets/
 │   └── templates/              # 文档起始模板
 │       ├── CONTEXT.md           # 共享状态文档
-│       ├── TIMELINE.md          # 仅追加的变更历史
 │       ├── HANDOFF.md           # 交接笔记（可选）
 │       └── POLICY.md            # 协作策略（可选）
 └── references/                 # 详细参考文档
@@ -55,7 +53,6 @@
 | 文档 | 说明 |
 |------|------|
 | `CONTEXT.md` | 汇总当前项目状态的核心文档，包含概述、稳定事实、活跃上下文、决策和未解决问题等部分。 |
-| `TIMELINE.md` | 重要上下文变更的仅追加历史记录。 |
 
 ### 可选文档
 
@@ -66,12 +63,12 @@
 
 ## 核心规则
 
-1. **先读后写**：先获取或同步，再读取`CONTEXT.md`和`TIMELINE.md`，然后再编辑。
+1. **先读后写**：先获取或同步，再读取`CONTEXT.md`，然后再编辑。
 2. **将共享记忆保存在仓库中**，而不仅仅在会话本地笔记中。
 3. **优先使用基于分支的更新**：应避免直接推送到默认分支，若需直接推送须有明确理由。
 4. **永不自动解决冲突**：若仓库脏或分支已分叉，停止并进行协调。
 5. **区分事实和推断**：已验证的事实放在稳定部分；不确定性在未解决问题中保持可见。
-6. **只为有意义的变更添加时间线条目**：避免为每个细微想法记录噪音日志。
+6. **在提交消息中记录变更历史**：使用结构化提交消息（Trigger/Applied/Unresolved），而非单独的文件。
 
 ## 使用方法
 
@@ -84,7 +81,7 @@ scripts/bootstrap_repo.sh
 # 2. 在本地克隆中同步
 scripts/sync_context.sh
 
-# 3. 读取CONTEXT.md、TIMELINE.md，以及HANDOFF.md（如有）
+# 3. 读取CONTEXT.md，以及HANDOFF.md（如有）
 
 # 4. 若需共享更新则创建分支
 scripts/prepare_branch.sh --actor <name> --slug <topic>
@@ -107,10 +104,9 @@ scripts/summarize_context.sh
 | `bootstrap_repo.sh` | 从模板创建初始文档集。 |
 | `check_divergence.sh` | 报告`context/*`分支与基础分支的分叉情况，并标记过期分支。 |
 | `cleanup_branches.sh` | 从本地和可选的`origin`上删除已合并的旧`context/*`分支。 |
-| `compact_timeline.sh` | 压缩旧的TIMELINE.md条目，将已应用的变更提升为CONTEXT.md的稳定事实。 |
 | `sync_context.sh` | 获取远程变更，并在安全时快进基础分支。 |
 | `prepare_branch.sh` | 创建或切换到名为`context/<actor>/<YYYY-MM-DD>-<slug>`的分支。 |
-| `validate_context.sh` | 检查必需文件、标题和时间线条目格式。 |
+| `validate_context.sh` | 检查必需文件和标题。 |
 | `summarize_context.sh` | 输出紧凑的状态摘要和压缩提示。 |
 
 ## 测试

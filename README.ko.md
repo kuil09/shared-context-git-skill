@@ -24,7 +24,6 @@
 │   ├── bootstrap_repo.sh       # 템플릿으로 초기 문서 생성
 │   ├── check_divergence.sh     # 컨텍스트 브랜치 분기 및 오래된 브랜치 보고
 │   ├── cleanup_branches.sh     # 오래된 병합 완료 컨텍스트 브랜치 정리
-│   ├── compact_timeline.sh     # 오래된 타임라인 항목을 CONTEXT.md 안정 사실로 승격
 │   ├── sync_context.sh         # 원격 변경 fetch 및 fast-forward
 │   ├── prepare_branch.sh       # 컨텍스트 브랜치 생성
 │   ├── validate_context.sh     # 문서 구조 검증
@@ -37,7 +36,6 @@
 ├── assets/
 │   └── templates/              # 문서 시작 템플릿
 │       ├── CONTEXT.md           # 공유 상태 문서
-│       ├── TIMELINE.md          # 변경 이력 (추가 전용)
 │       ├── HANDOFF.md           # 인수인계 노트 (선택)
 │       └── POLICY.md            # 협업 정책 (선택)
 └── references/                 # 상세 참조 문서
@@ -55,7 +53,6 @@
 | 문서 | 설명 |
 |------|------|
 | `CONTEXT.md` | 현재 프로젝트 상태를 요약하는 핵심 문서. 개요, 안정적 사실, 활성 컨텍스트, 의사결정, 미해결 질문 섹션으로 구성 |
-| `TIMELINE.md` | 의미 있는 컨텍스트 변경의 추가 전용(append-only) 이력 |
 
 ### 선택 문서
 
@@ -66,12 +63,12 @@
 
 ## 핵심 규칙
 
-1. **읽기 우선**: fetch 또는 sync 후 `CONTEXT.md`와 `TIMELINE.md`를 먼저 읽은 뒤 편집합니다.
+1. **읽기 우선**: fetch 또는 sync 후 `CONTEXT.md`를 먼저 읽은 뒤 편집합니다.
 2. **공유 메모리 활용**: 세션 로컬 노트가 아닌 저장소에 공유 메모리를 보관합니다.
 3. **브랜치 기반 업데이트**: 기본 브랜치에 직접 push하지 않고 브랜치를 통해 업데이트합니다.
 4. **충돌 자동 해결 금지**: 저장소가 dirty하거나 브랜치가 분기된 경우 중단하고 조정합니다.
 5. **사실과 추론 분리**: 검증된 사실은 안정 섹션에, 불확실한 내용은 미해결 질문에 기록합니다.
-6. **의미 있는 타임라인 항목**: 사소한 변경이 아닌 의미 있는 변경만 타임라인에 기록합니다.
+6. **변경 이력은 커밋 메시지에 기록**: 별도 파일이 아닌 구조화된 커밋 메시지(Trigger/Applied/Unresolved)를 사용합니다.
 
 ## 사용 방법
 
@@ -84,7 +81,7 @@ scripts/bootstrap_repo.sh
 # 2. 로컬 클론에서 동기화
 scripts/sync_context.sh
 
-# 3. CONTEXT.md, TIMELINE.md, HANDOFF.md(있으면) 읽기
+# 3. CONTEXT.md, HANDOFF.md(있으면) 읽기
 
 # 4. 업데이트 공유가 필요하면 브랜치 생성
 scripts/prepare_branch.sh --actor <name> --slug <topic>
@@ -107,10 +104,9 @@ scripts/summarize_context.sh
 | `bootstrap_repo.sh` | 템플릿에서 초기 문서 세트를 생성합니다 |
 | `check_divergence.sh` | `context/*` 브랜치의 분기 상태 및 오래된 브랜치를 보고합니다 |
 | `cleanup_branches.sh` | 병합된 오래된 `context/*` 브랜치를 로컬 또는 원격에서 정리합니다 |
-| `compact_timeline.sh` | 오래된 TIMELINE.md 항목을 CONTEXT.md 안정 사실로 승격하고 정리합니다 |
 | `sync_context.sh` | 원격 변경을 fetch하고 기본 브랜치를 안전하게 fast-forward합니다 |
 | `prepare_branch.sh` | `context/<actor>/<YYYY-MM-DD>-<slug>` 형식의 브랜치를 생성하거나 전환합니다 |
-| `validate_context.sh` | 필수 파일, 제목, 타임라인 항목 형식을 검사합니다 |
+| `validate_context.sh` | 필수 파일과 제목을 검사합니다 |
 | `summarize_context.sh` | 간결한 상태 요약과 압축 힌트를 출력합니다 |
 
 ## 테스트

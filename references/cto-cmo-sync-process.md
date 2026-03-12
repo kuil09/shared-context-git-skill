@@ -69,7 +69,6 @@ After each sync, the CTO updates the shared context repo:
 ```bash
 scripts/prepare_branch.sh --actor cto --slug cto-cmo-sync
 # Update CONTEXT.md with decisions and active state
-# Update TIMELINE.md with sync summary entry
 scripts/validate_context.sh
 ```
 

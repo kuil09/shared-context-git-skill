@@ -24,7 +24,7 @@ scripts/sync_context.sh
 # 3. Create a context branch for your update
 scripts/prepare_branch.sh --actor <your-name> --slug <short-topic>
 
-# 4. Edit CONTEXT.md and/or TIMELINE.md
+# 4. Edit CONTEXT.md
 
 # 5. Validate, review, and commit
 scripts/validate_context.sh
@@ -53,7 +53,6 @@ git push
 │   ├── bootstrap_repo.sh       # Create initial documents from templates
 │   ├── check_divergence.sh     # Report context branch divergence and stale branches
 │   ├── cleanup_branches.sh     # Remove old merged context/* branches
-│   ├── compact_timeline.sh     # Promote old timeline entries to CONTEXT.md stable facts
 │   ├── sync_context.sh         # Fetch remote changes and fast-forward
 │   ├── prepare_branch.sh       # Create a context branch
 │   ├── validate_context.sh     # Validate document structure
@@ -66,7 +65,6 @@ git push
 ├── assets/
 │   └── templates/              # Starter document templates
 │       ├── CONTEXT.md           # Shared state document
-│       ├── TIMELINE.md          # Append-only change history
 │       ├── HANDOFF.md           # Handoff notes (optional)
 │       └── POLICY.md            # Collaboration policy (optional)
 └── references/                 # Detailed reference documents
@@ -84,7 +82,6 @@ git push
 | Document | Description |
 |----------|-------------|
 | `CONTEXT.md` | Core document summarizing current project state. Contains overview, stable facts, active context, decisions, and open questions sections. |
-| `TIMELINE.md` | Append-only history of meaningful context changes. |
 
 ### Optional
 
@@ -95,12 +92,12 @@ git push
 
 ## Core Rules
 
-1. **Read before write.** Fetch or sync first, then read `CONTEXT.md` and `TIMELINE.md` before editing.
+1. **Read before write.** Fetch or sync first, then read `CONTEXT.md` before editing.
 2. **Keep shared memory in the repo**, not only in session-local notes.
 3. **Prefer branch-first updates.** Direct pushes to the default branch should be rare and explicitly justified.
 4. **Never overwrite conflicts automatically.** If the repo is dirty or the branch has diverged, stop and reconcile.
 5. **Separate facts from inferences.** Verified facts belong in the stable sections; uncertainty stays visible in open questions or clearly labeled hypotheses.
-6. **Add timeline entries only for meaningful changes.** Avoid noisy logging for every minor thought.
+6. **Record change history in commit messages**, not in separate files. Use structured commit messages with Trigger/Applied/Unresolved fields.
 
 ## Usage
 
@@ -113,7 +110,7 @@ scripts/bootstrap_repo.sh
 # 2. Sync in a local clone
 scripts/sync_context.sh
 
-# 3. Read CONTEXT.md, TIMELINE.md, and HANDOFF.md if present
+# 3. Read CONTEXT.md and HANDOFF.md if present
 
 # 4. Create a branch if you expect to share updates
 scripts/prepare_branch.sh --actor <name> --slug <topic>
@@ -136,10 +133,9 @@ scripts/summarize_context.sh
 | `bootstrap_repo.sh` | Create the initial document set from templates. |
 | `check_divergence.sh` | Report divergence of `context/*` branches from the base branch and flag stale branches. |
 | `cleanup_branches.sh` | Remove merged, older `context/*` branches locally and optionally on `origin`. |
-| `compact_timeline.sh` | Compact old TIMELINE.md entries by promoting applied changes to CONTEXT.md stable facts. |
 | `sync_context.sh` | Fetch remote changes and fast-forward the base branch when safe. |
 | `prepare_branch.sh` | Create or switch to a branch named `context/<actor>/<YYYY-MM-DD>-<slug>`. |
-| `validate_context.sh` | Check required files, headings, and timeline entry shape. |
+| `validate_context.sh` | Check required files and headings. |
 | `summarize_context.sh` | Print a compact status summary and compaction hints. |
 
 ## Tests

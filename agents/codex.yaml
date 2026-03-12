@@ -13,10 +13,10 @@ parameters:
 
 workflow_hints:
   - "Run scripts/sync_context.sh before reading or editing any shared document."
-  - "Always read CONTEXT.md and TIMELINE.md before making changes."
+  - "Always read CONTEXT.md before making changes."
   - "Use scripts/prepare_branch.sh --actor codex --slug <topic> to create update branches."
   - "Run scripts/validate_context.sh after edits and before committing."
-  - "Commit only when changes are meaningful — avoid noisy timeline entries."
+  - "Commit only when changes are meaningful. Use structured commit messages with Trigger/Applied/Unresolved fields."
 
 skill_paths:
   skill_definition: "SKILL.md"

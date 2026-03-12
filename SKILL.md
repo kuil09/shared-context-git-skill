@@ -30,7 +30,7 @@ The shared memory lives in a separate Git repository made of Markdown files. Age
 3. Prefer branch-first updates. Direct pushes to the default branch should be rare and explicitly justified.
 4. Never overwrite conflicts automatically. If the repo is dirty or the branch has diverged, stop and reconcile.
 5. Separate facts from inferences. Verified facts belong in the stable sections; uncertainty stays visible in open questions or clearly labeled hypotheses.
-6. Add timeline entries only for meaningful changes. Avoid noisy logging for every minor thought.
+6. Record change history in commit messages, not in separate files. Use structured commit messages with Trigger/Applied/Unresolved fields.
 
 ## Recommended Workflow
 
