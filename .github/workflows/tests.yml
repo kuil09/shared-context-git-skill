@@ -1,0 +1,50 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  bats:
+    name: BATS Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Run BATS suite
+        run: ./tests/run_tests.sh
+
+  validate-context:
+    name: Validate Shared Context
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check for shared-context file changes
+        id: changed
+        run: |
+          FILES=$(gh pr diff "${{ github.event.pull_request.number }}" --name-only 2>/dev/null || git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")
+          if echo "$FILES" | grep -qE '^(CONTEXT\.md|TIMELINE\.md|HANDOFF\.md|POLICY\.md)$'; then
+            echo "has_context_files=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_context_files=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Run validate_context.sh
+        if: steps.changed.outputs.has_context_files == 'true'
+        run: ./scripts/validate_context.sh
+
+      - name: Skip validation (no context files changed)
+        if: steps.changed.outputs.has_context_files != 'true'
+        run: echo "No shared-context files changed — skipping validation"
