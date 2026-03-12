@@ -3,13 +3,18 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: validate_context.sh [--repo DIR]
+Usage: validate_context.sh [--repo DIR] [--strict]
 
 Validate required shared-context files and basic document structure.
+
+Options:
+  --repo DIR   Path to the repository directory (default: .)
+  --strict     Enable strict validation (ISO 8601 timestamps, non-empty fields)
 EOF
 }
 
 repo_dir="."
+strict=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -17,6 +22,10 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || { echo "Missing value for --repo" >&2; exit 1; }
       repo_dir="$2"
       shift 2
+      ;;
+    --strict)
+      strict=1
+      shift
       ;;
     -h|--help)
       usage
@@ -97,9 +106,39 @@ while IFS= read -r line; do
 
   [[ "$in_entry" -eq 1 ]] || continue
 
-  [[ "$line" =~ ^-\ Timestamp:\  ]] && has_timestamp=1
-  [[ "$line" =~ ^-\ Actor:\  ]] && has_actor=1
-  [[ "$line" =~ ^-\ Trigger:\  ]] && has_trigger=1
+  if [[ "$line" =~ ^-\ Timestamp: ]]; then
+    has_timestamp=1
+    if [[ "$strict" -eq 1 ]]; then
+      local_val="${line#- Timestamp:}"
+      local_val="${local_val#"${local_val%%[![:space:]]*}"}"
+      if [[ -z "$local_val" || ! "$local_val" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2} ]]; then
+        echo "TIMELINE.md has an entry with invalid ISO 8601 timestamp: '${local_val}'" >&2
+        exit 1
+      fi
+    fi
+  fi
+  if [[ "$line" =~ ^-\ Actor: ]]; then
+    has_actor=1
+    if [[ "$strict" -eq 1 ]]; then
+      local_val="${line#- Actor:}"
+      local_val="${local_val#"${local_val%%[![:space:]]*}"}"
+      if [[ -z "$local_val" ]]; then
+        echo "TIMELINE.md has an entry with empty Actor field" >&2
+        exit 1
+      fi
+    fi
+  fi
+  if [[ "$line" =~ ^-\ Trigger: ]]; then
+    has_trigger=1
+    if [[ "$strict" -eq 1 ]]; then
+      local_val="${line#- Trigger:}"
+      local_val="${local_val#"${local_val%%[![:space:]]*}"}"
+      if [[ -z "$local_val" ]]; then
+        echo "TIMELINE.md has an entry with empty Trigger field" >&2
+        exit 1
+      fi
+    fi
+  fi
   [[ "$line" =~ ^-\ Applied\ Changes: ]] && has_applied=1
   [[ "$line" =~ ^-\ Unresolved\ Items: ]] && has_unresolved=1
 done < TIMELINE.md
