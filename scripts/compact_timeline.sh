@@ -87,10 +87,10 @@ classify_timestamp() {
   local entry_epoch
   if date --version >/dev/null 2>&1; then
     # GNU date
-    entry_epoch=$(date -d "$date_part" +%s 2>/dev/null) || return 1
+    entry_epoch=$(date -d "${date_part}T00:00:00" +%s 2>/dev/null) || return 1
   else
-    # BSD/macOS date
-    entry_epoch=$(date -j -f "%Y-%m-%d" "$date_part" +%s 2>/dev/null) || return 1
+    # BSD/macOS date — must specify time to avoid using current wall-clock time
+    entry_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${date_part}T00:00:00" +%s 2>/dev/null) || return 1
   fi
   (( entry_epoch < cutoff_epoch ))
 }
