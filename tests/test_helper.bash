@@ -30,7 +30,6 @@ setup_git_repo() {
 bootstrap_context() {
   local dir="${1:-$TEST_TMPDIR}"
   cp "$TEMPLATES_DIR/CONTEXT.md" "$dir/CONTEXT.md"
-  cp "$TEMPLATES_DIR/TIMELINE.md" "$dir/TIMELINE.md"
 }
 
 setup_tracking_repo() {

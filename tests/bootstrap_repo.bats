@@ -5,11 +5,10 @@ load test_helper
 setup() { setup_tmpdir; }
 teardown() { teardown_tmpdir; }
 
-@test "bootstrap creates CONTEXT.md and TIMELINE.md by default" {
+@test "bootstrap creates CONTEXT.md by default" {
   run "$SCRIPTS_DIR/bootstrap_repo.sh" --target "$TEST_TMPDIR"
   [ "$status" -eq 0 ]
   [ -f "$TEST_TMPDIR/CONTEXT.md" ]
-  [ -f "$TEST_TMPDIR/TIMELINE.md" ]
   [[ "$output" == *"Created"* ]]
 }
 
@@ -25,11 +24,10 @@ teardown() { teardown_tmpdir; }
   [ -f "$TEST_TMPDIR/POLICY.md" ]
 }
 
-@test "bootstrap with all optional flags creates all 4 files" {
+@test "bootstrap with all optional flags creates all files" {
   run "$SCRIPTS_DIR/bootstrap_repo.sh" --target "$TEST_TMPDIR" --with-handoff --with-policy
   [ "$status" -eq 0 ]
   [ -f "$TEST_TMPDIR/CONTEXT.md" ]
-  [ -f "$TEST_TMPDIR/TIMELINE.md" ]
   [ -f "$TEST_TMPDIR/HANDOFF.md" ]
   [ -f "$TEST_TMPDIR/POLICY.md" ]
 }
@@ -85,14 +83,11 @@ teardown() { teardown_tmpdir; }
   [[ "$output" == *"Missing value"* ]]
 }
 
-@test "bootstrap refuses to overwrite existing CONTEXT.md even when TIMELINE.md is absent" {
-  # Only place CONTEXT.md in the target — TIMELINE.md is not there yet
+@test "bootstrap refuses to overwrite existing CONTEXT.md" {
   cp "$TEMPLATES_DIR/CONTEXT.md" "$TEST_TMPDIR/CONTEXT.md"
 
   run "$SCRIPTS_DIR/bootstrap_repo.sh" --target "$TEST_TMPDIR"
 
   [ "$status" -ne 0 ]
   [[ "$output" == *"Refusing to overwrite"* ]]
-  # TIMELINE.md should NOT have been created
-  [ ! -f "$TEST_TMPDIR/TIMELINE.md" ]
 }

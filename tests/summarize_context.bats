@@ -49,19 +49,6 @@ EOF
   [[ "$output" == *"- Same bullet"* ]]
 }
 
-@test "summarize_context warns when TIMELINE.md has more than 20 entries" {
-  bootstrap_context
-  # Append 21 ### entries to TIMELINE.md
-  for i in $(seq 1 21); do
-    printf '\n### 2026-03-12T10:%02d:00Z | bot\n- Entry %d\n' "$i" "$i" >> "$TEST_TMPDIR/TIMELINE.md"
-  done
-
-  run "$SCRIPTS_DIR/summarize_context.sh" --repo "$TEST_TMPDIR"
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"more than 20 entries"* ]]
-}
-
 @test "summarize_context warns when CONTEXT.md exceeds 120 lines" {
   bootstrap_context
   {
@@ -90,21 +77,10 @@ EOF
 }
 
 @test "summarize_context fails when CONTEXT.md is missing" {
-  cp "$TEMPLATES_DIR/TIMELINE.md" "$TEST_TMPDIR/TIMELINE.md"
-
   run "$SCRIPTS_DIR/summarize_context.sh" --repo "$TEST_TMPDIR"
 
   [ "$status" -ne 0 ]
   [[ "$output" == *"Missing CONTEXT.md"* ]]
-}
-
-@test "summarize_context fails when TIMELINE.md is missing" {
-  cp "$TEMPLATES_DIR/CONTEXT.md" "$TEST_TMPDIR/CONTEXT.md"
-
-  run "$SCRIPTS_DIR/summarize_context.sh" --repo "$TEST_TMPDIR"
-
-  [ "$status" -ne 0 ]
-  [[ "$output" == *"Missing TIMELINE.md"* ]]
 }
 
 @test "summarize_context --help prints usage" {
@@ -151,7 +127,7 @@ EOF
   [[ "$output" != *"Duplicate bullets"* ]]
 }
 
-@test "summarize_context emits all three hints when all conditions are met" {
+@test "summarize_context emits both hints when conditions are met" {
   bootstrap_context
   {
     echo "# Shared Context"
@@ -174,14 +150,9 @@ EOF
     for i in $(seq 1 15); do echo "- Question $i"; done
   } > "$TEST_TMPDIR/CONTEXT.md"
 
-  for i in $(seq 1 21); do
-    printf '\n### 2026-03-12T10:%02d:00Z | bot\n- Entry %d\n' "$i" "$i" >> "$TEST_TMPDIR/TIMELINE.md"
-  done
-
   run "$SCRIPTS_DIR/summarize_context.sh" --repo "$TEST_TMPDIR"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"longer than 120 lines"* ]]
-  [[ "$output" == *"more than 20 entries"* ]]
   [[ "$output" == *"Duplicate bullets detected in CONTEXT.md"* ]]
 }
