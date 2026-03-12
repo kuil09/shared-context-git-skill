@@ -113,3 +113,51 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage:"* ]]
 }
+
+@test "summarize_context rejects unknown argument" {
+  run "$SCRIPTS_DIR/summarize_context.sh" --bogus-flag
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Unknown argument"* ]]
+}
+
+@test "summarize_context rejects --repo with missing value" {
+  run "$SCRIPTS_DIR/summarize_context.sh" --repo
+
+  [ "$status" -ne 0 ]
+}
+
+@test "summarize_context emits all three hints when all conditions are met" {
+  bootstrap_context
+  {
+    echo "# Shared Context"
+    echo ""
+    echo "## Overview"
+    echo "- Same bullet"
+    for i in $(seq 1 30); do echo "- Fact $i"; done
+    echo ""
+    echo "## Stable Facts"
+    echo "- Same bullet"
+    for i in $(seq 1 30); do echo "- Stable $i"; done
+    echo ""
+    echo "## Active Context"
+    for i in $(seq 1 30); do echo "- Active $i"; done
+    echo ""
+    echo "## Decisions"
+    for i in $(seq 1 15); do echo "- Decision $i"; done
+    echo ""
+    echo "## Open Questions"
+    for i in $(seq 1 15); do echo "- Question $i"; done
+  } > "$TEST_TMPDIR/CONTEXT.md"
+
+  for i in $(seq 1 21); do
+    printf '\n### 2026-03-12T10:%02d:00Z | bot\n- Entry %d\n' "$i" "$i" >> "$TEST_TMPDIR/TIMELINE.md"
+  done
+
+  run "$SCRIPTS_DIR/summarize_context.sh" --repo "$TEST_TMPDIR"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"longer than 120 lines"* ]]
+  [[ "$output" == *"more than 20 entries"* ]]
+  [[ "$output" == *"Duplicate bullets detected in CONTEXT.md"* ]]
+}

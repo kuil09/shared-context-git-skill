@@ -127,3 +127,97 @@ create_stale_context_branch() {
   [[ "$output" == *"Not a Git repository"* ]]
   rm -rf "$non_repo"
 }
+
+@test "check_divergence rejects unknown argument" {
+  run "$SCRIPTS_DIR/check_divergence.sh" --unknown-flag
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Unknown argument"* ]]
+}
+
+@test "check_divergence fails when base branch does not exist" {
+  run "$SCRIPTS_DIR/check_divergence.sh" --repo "$TEST_TMPDIR" --base-branch nonexistent
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"does not exist"* ]]
+}
+
+@test "check_divergence respects custom --base-branch" {
+  # Create a develop branch and a context branch off of it
+  git -C "$TEST_TMPDIR" checkout -b develop >/dev/null 2>&1
+  git -C "$TEST_TMPDIR" checkout -b "context/bot/2026-03-12-feature" >/dev/null 2>&1
+  echo "change" > "$TEST_TMPDIR/feat.txt"
+  git -C "$TEST_TMPDIR" add feat.txt
+  git -C "$TEST_TMPDIR" commit -m "feat commit" >/dev/null 2>&1
+  git -C "$TEST_TMPDIR" checkout develop >/dev/null 2>&1
+
+  run "$SCRIPTS_DIR/check_divergence.sh" --repo "$TEST_TMPDIR" --base-branch develop --threshold 10
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"context/bot/2026-03-12-feature: ahead=1 behind=0 (ok)"* ]]
+}
+
+@test "check_divergence rejects --repo with missing value" {
+  run "$SCRIPTS_DIR/check_divergence.sh" --repo
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Missing value for --repo"* ]]
+}
+
+@test "check_divergence rejects --base-branch with missing value" {
+  run "$SCRIPTS_DIR/check_divergence.sh" --base-branch
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Missing value for --base-branch"* ]]
+}
+
+@test "check_divergence rejects --threshold with missing value" {
+  run "$SCRIPTS_DIR/check_divergence.sh" --threshold
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Missing value for --threshold"* ]]
+}
+
+@test "check_divergence rejects --stale-days with missing value" {
+  run "$SCRIPTS_DIR/check_divergence.sh" --stale-days
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Missing value for --stale-days"* ]]
+}
+
+@test "check_divergence warns when behind count exceeds threshold" {
+  create_context_branch "context/bot/2026-03-12-behind-warn" 1
+
+  # Add many commits to main so the context branch is far behind
+  for i in $(seq 1 12); do
+    echo "main change $i" > "$TEST_TMPDIR/main-extra-${i}.txt"
+    git -C "$TEST_TMPDIR" add "main-extra-${i}.txt"
+    git -C "$TEST_TMPDIR" commit -m "main commit $i" >/dev/null 2>&1
+  done
+
+  run "$SCRIPTS_DIR/check_divergence.sh" --repo "$TEST_TMPDIR" --threshold 10
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"ahead=1 behind=12"* ]]
+  [[ "$output" == *"WARNING"* ]]
+}
+
+@test "check_divergence reports branch that is both stale and diverged" {
+  local old_date
+  old_date="$(date -v-60d +%Y-%m-%dT12:00:00 2>/dev/null || date -d "60 days ago" +%Y-%m-%dT12:00:00)"
+
+  git -C "$TEST_TMPDIR" checkout -b "context/bot/2026-01-01-stale-diverged" >/dev/null 2>&1
+  for i in $(seq 1 12); do
+    echo "change $i" > "$TEST_TMPDIR/sd-${i}.txt"
+    git -C "$TEST_TMPDIR" add "sd-${i}.txt"
+    GIT_AUTHOR_DATE="$old_date" GIT_COMMITTER_DATE="$old_date" \
+      git -C "$TEST_TMPDIR" commit -m "old commit $i" >/dev/null 2>&1
+  done
+  git -C "$TEST_TMPDIR" checkout main >/dev/null 2>&1
+
+  run "$SCRIPTS_DIR/check_divergence.sh" --repo "$TEST_TMPDIR" --threshold 10 --stale-days 30
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"[stale]"* ]]
+  [[ "$output" == *"WARNING"* ]]
+}

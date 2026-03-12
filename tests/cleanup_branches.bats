@@ -112,3 +112,89 @@ merge_context_branch_into_main() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage:"* ]]
 }
+
+@test "cleanup_branches fails when not a git repo" {
+  local non_repo
+  non_repo="$(mktemp -d)"
+
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --repo "$non_repo"
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Not a Git repository"* ]]
+  rm -rf "$non_repo"
+}
+
+@test "cleanup_branches rejects unknown argument" {
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --repo "$TRACKING_REPO_DIR" --bogus
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Unknown argument"* ]]
+}
+
+@test "cleanup_branches respects custom --base-branch" {
+  # Create a develop branch and make it the base
+  git -C "$TRACKING_REPO_DIR" checkout -b develop >/dev/null 2>&1
+  git -C "$TRACKING_REPO_DIR" checkout main >/dev/null 2>&1
+
+  # Create an old context branch and merge it into develop
+  create_context_branch_commit "context/alice/2020-01-15-dev-branch" "dev-branch.txt" "dev branch" "$OLD_DATE"
+  git -C "$TRACKING_REPO_DIR" checkout develop >/dev/null 2>&1
+  git -C "$TRACKING_REPO_DIR" merge --ff-only "context/alice/2020-01-15-dev-branch" >/dev/null 2>&1
+  git -C "$TRACKING_REPO_DIR" checkout main >/dev/null 2>&1
+
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --repo "$TRACKING_REPO_DIR" --base-branch develop
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Deleted local branch: context/alice/2020-01-15-dev-branch"* ]]
+}
+
+@test "cleanup_branches rejects --repo with missing value" {
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --repo
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Missing value for --repo"* ]]
+}
+
+@test "cleanup_branches rejects --base-branch with missing value" {
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --base-branch
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Missing value for --base-branch"* ]]
+}
+
+@test "cleanup_branches rejects --days with missing value" {
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --days
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Missing value for --days"* ]]
+}
+
+@test "cleanup_branches skips the currently checked-out context branch" {
+  create_context_branch_commit "context/alice/2020-01-15-active-ctx" "active-ctx.txt" "active ctx" "$OLD_DATE"
+  merge_context_branch_into_main "context/alice/2020-01-15-active-ctx"
+  # Check out the merged (old) context branch as the current branch
+  git -C "$TRACKING_REPO_DIR" checkout "context/alice/2020-01-15-active-ctx" >/dev/null 2>&1
+
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --repo "$TRACKING_REPO_DIR"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No context branches to clean up."* ]]
+  run git -C "$TRACKING_REPO_DIR" rev-parse --verify "context/alice/2020-01-15-active-ctx"
+  [ "$status" -eq 0 ]
+}
+
+@test "cleanup_branches deletes multiple merged context branches in one run" {
+  create_context_branch_commit "context/alice/2020-01-15-multi-1" "multi1.txt" "multi 1" "$OLD_DATE"
+  merge_context_branch_into_main "context/alice/2020-01-15-multi-1"
+  create_context_branch_commit "context/bob/2020-01-15-multi-2" "multi2.txt" "multi 2" "$OLD_DATE"
+  merge_context_branch_into_main "context/bob/2020-01-15-multi-2"
+
+  run "$SCRIPTS_DIR/cleanup_branches.sh" --repo "$TRACKING_REPO_DIR"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Total: 2 branch(es) deleted."* ]]
+  run git -C "$TRACKING_REPO_DIR" rev-parse --verify "context/alice/2020-01-15-multi-1"
+  [ "$status" -ne 0 ]
+  run git -C "$TRACKING_REPO_DIR" rev-parse --verify "context/bob/2020-01-15-multi-2"
+  [ "$status" -ne 0 ]
+}
