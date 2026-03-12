@@ -99,7 +99,7 @@ while IFS= read -r branch; do
   if $dry_run; then
     echo "[dry-run] Would delete: $branch"
   else
-    git branch -d "$branch" >/dev/null 2>&1
+    git branch -D "$branch" >/dev/null 2>&1
     echo "Deleted local branch: $branch"
   fi
   deleted_count=$((deleted_count + 1))
